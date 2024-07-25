@@ -44,7 +44,7 @@ gpio_set(int port, int pin, int val)
 }
 
 static int
-mcp3421_get_mv(uint8_t unit)
+mcp3421_get_mv(uint8_t addr)
 {
 	struct i2c_msg msgs[1];
 	uint8_t data[3];
@@ -52,10 +52,9 @@ mcp3421_get_mv(uint8_t unit)
 	int mv;
 	int ret;
 
-	msgs[0].slave = 0x68 << 1;
-
 	bzero(&data, 3);
 
+	msgs[0].slave = addr;
 	msgs[0].buf = data;
 	msgs[0].len = 3;
 	msgs[0].flags = IIC_M_RD;
@@ -67,7 +66,7 @@ mcp3421_get_mv(uint8_t unit)
 		b1 = data[1];
 		b0 = data[2];
 
-		printf("%s(%d): read %d %d %02x\n", __func__, unit, b2, b1, b0);
+		printf("%s: read %d %d %02x\n", __func__, b2, b1, b0);
 		mv = b2 << 8 | b1;
 		return (mv * 1);
         }
@@ -76,22 +75,25 @@ mcp3421_get_mv(uint8_t unit)
 }
 
 static int
-mcp3421_configure(uint8_t slave)
+mcp3421_configure(uint8_t addr)
 {
 	struct i2c_msg msgs[1];
 	uint8_t cfg;
 	int ret;
 
-	/* Configure the MCP3421. */
+	/* Configure the mcp3421. */
+
 	cfg = 0x10 | (1 << 2);
-	msgs[0].slave = slave;
+
+	msgs[0].slave = addr;
 	msgs[0].buf = &cfg;
 	msgs[0].len = 1;
-	msgs[0].flags = IIC_M_NOSTOP;
+	msgs[0].flags = 0;
+
 	ret = stm32f4_i2c_xfer(&dev_i2c1, msgs, 1);
 	if (ret != 0) {
-		printf("%s: could not configure mcp3421, slave %x\n",
-		    __func__, slave);
+		printf("%s: could not configure mcp3421, addr %x\n",
+		    __func__, addr);
 		return (ret);
 	}
 
@@ -103,25 +105,23 @@ mcp3421_configure(uint8_t slave)
 int
 main(void)
 {
+	uint8_t addr;
 	int mv;
-
-	printf("hello world\n");
-
-	//i2c_bitbang_init(&dev_bitbang, &i2c_ops);
 
 	printf("sldr started\n");
 
-	gpio_set(PORT_A, 6, 0); /* HEATER_EN */
-	gpio_set(PORT_C, 6, 1); /* LED disable */
+	addr = (0x68 << 1);
 
-	//mcp3421_configure(0x68);
-	//while (1) {
-		mcp3421_configure(0x68 << 1);
-		mdx_usleep(500000);
-	//}
+	gpio_set(PORT_A, 6, 0); /* Heater */
+	gpio_set(PORT_C, 6, 1); /* LED */
+
+	mcp3421_configure(addr);
+
+	mdx_usleep(10000);
 
 	while (1) {
-		mv = mcp3421_get_mv(0);
+		mv = mcp3421_get_mv(addr);
+
 		printf("mv %d\n", mv);
 
 		if (mv >= 0 && mv < 4) {
