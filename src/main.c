@@ -33,7 +33,12 @@
 #include <dev/i2c/i2c.h>
 
 extern struct stm32f4_gpio_softc gpio_sc;
+extern struct stm32g0_exti_softc exti_sc;
 extern struct mdx_device dev_i2c1;
+
+static int global_enable;
+
+#define	dprintf(fmt, ...)
 
 static void
 gpio_set(int port, int pin, int val)
@@ -42,13 +47,42 @@ gpio_set(int port, int pin, int val)
 	pin_set(&gpio_sc, port, pin, val);
 }
 
+static void
+exti_handler(void *arg, int raising)
+{
+
+	dprintf("%s: %d\n", __func__, raising);
+
+	if (raising) {
+		if (global_enable == 0)
+			global_enable = 1;
+		else
+			global_enable = 0;
+	}
+
+	if (global_enable)
+		gpio_set(PORT_C, 6, 0); /* LED */
+	else
+		gpio_set(PORT_C, 6, 1); /* LED */
+}
+
+struct exti_intr_entry map[] = {
+	{ },
+	{ },
+	{ },
+	{ },
+	{ },
+	{ },
+	{ },
+	{ .handler = exti_handler, .arg = NULL },
+};
+
 static int
-mcp3421_get_mv(uint8_t addr)
+mcp3421_get_mv(uint8_t addr, uint32_t *mv)
 {
 	struct i2c_msg msgs[1];
 	uint8_t data[3];
-	int b0, b1, b2;
-	int mv;
+	int b0 __unused, b1, b2;
 	int ret;
 
 	msgs[0].slave = addr;
@@ -62,9 +96,9 @@ mcp3421_get_mv(uint8_t addr)
 		b1 = data[1];
 		b0 = data[2];
 
-		printf("%s: read %d %d %02x\n", __func__, b2, b1, b0);
-		mv = b2 << 8 | b1;
-		return (mv * 1);
+		dprintf("%s: read %d %d %02x\n", __func__, b2, b1, b0);
+		*mv = b2 << 8 | b1;
+		return (0);
         }
 
         return (-1);
@@ -98,37 +132,65 @@ mcp3421_configure(uint8_t addr)
 	return (0);
 }
 
+static int
+get_delay_us(int mv)
+{
+	uint32_t val;
+
+	if (mv < 10)
+		val = 500000;
+	else if (mv < 15)
+		val = 300000;
+	else if (mv < 17)
+		val = 150000;
+	else
+		val = 100000;
+
+        return (val);
+}
+
 int
 main(void)
 {
+	uint32_t us;
+	uint32_t mv;
 	uint8_t addr;
-	int mv;
+	int error;
 
 	printf("sldr started\n");
 
+	/* Starting disabled. */
+	global_enable = 0;
+	gpio_set(PORT_A, 6, 0); /* Heater disable */
+	gpio_set(PORT_C, 6, 1); /* LED disable */
+
 	addr = (0x68 << 1);
 
-	gpio_set(PORT_A, 6, 0); /* Heater */
-	gpio_set(PORT_C, 6, 1); /* LED */
+	stm32g0_exti_install_intr_map(&exti_sc, map);
 
 	mcp3421_configure(addr);
 
-	mdx_usleep(10000);
-
 	while (1) {
-		mv = mcp3421_get_mv(addr);
+		mdx_usleep(50000);
 
-		printf("mv %d\n", mv);
-
-		if (mv >= 0 && mv < 4) {
-			gpio_set(PORT_A, 6, 1); /* HEATER_EN */
-			gpio_set(PORT_C, 6, 0); /* LED disable */
-			mdx_usleep(500000);
-			gpio_set(PORT_A, 6, 0); /* HEATER_EN */
-			gpio_set(PORT_C, 6, 1); /* LED disable */
+		error = mcp3421_get_mv(addr, &mv);
+		if (error) {
+			printf("%s: error reading mcp3421\n", __func__);
+			continue;
 		}
 
-		mdx_usleep(500000);
+		printf("%s: enable %d mv %d\n", __func__, global_enable, mv);
+
+		if (global_enable) {
+			if (mv >= 0 && mv < 4) {
+				us = get_delay_us(mv);
+
+				gpio_set(PORT_A, 6, 1); /* Heater enable. */
+				mdx_usleep(us);
+				gpio_set(PORT_A, 6, 0); /* Heater disable. */
+			}
+		} else
+			mdx_usleep(500000);
 	}
 
 	return (0);

@@ -42,8 +42,8 @@ static struct stm32g0_rcc_softc rcc_sc;
 static struct stm32l4_usart_softc usart_sc;
 static struct stm32f4_timer_softc timer_sc;
 static struct stm32g0_syscfg_softc syscfg_sc;
-static struct stm32g0_exti_softc exti_sc;
 
+struct stm32g0_exti_softc exti_sc;
 struct stm32f4_gpio_softc gpio_sc;
 
 static struct stm32f4_i2c_softc i2c1_sc;
