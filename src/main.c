@@ -182,7 +182,7 @@ main(void)
 		printf("%s: enable %d mv %d\n", __func__, global_enable, mv);
 
 		if (global_enable) {
-			if (mv >= 0 && mv < 4) {
+			if (mv >= 0 && mv < 19) {
 				us = get_delay_us(mv);
 
 				gpio_set(PORT_A, 6, 1); /* Heater enable. */
