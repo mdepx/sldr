@@ -40,18 +40,19 @@
 #include <arm/stm/stm32g0.h>
 #include <arm/arm/nvic.h>
 
-struct stm32g0_rcc_softc rcc_sc;
-struct stm32l4_usart_softc usart_sc;
-struct stm32f4_gpio_softc gpio_sc;
-struct stm32f4_timer_softc timer_sc;
+static struct stm32g0_rcc_softc rcc_sc;
+static struct stm32l4_usart_softc usart_sc;
+static struct stm32f4_timer_softc timer_sc;
 static struct stm32g0_syscfg_softc syscfg_sc;
-struct stm32g0_exti_softc exti_sc;
+static struct stm32g0_exti_softc exti_sc;
 
-struct stm32f4_i2c_softc i2c1_sc;
+struct stm32f4_gpio_softc gpio_sc;
+
+static struct stm32f4_i2c_softc i2c1_sc;
 struct mdx_device dev_i2c1 = { .sc = &i2c1_sc };
 
-struct arm_nvic_softc nvic_sc;
-struct mdx_device dev_nvic = { .sc = &nvic_sc };
+static struct arm_nvic_softc nvic_sc;
+static struct mdx_device dev_nvic = { .sc = &nvic_sc };
 
 void
 udelay(uint32_t usec)

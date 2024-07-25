@@ -33,7 +33,6 @@
 #include <dev/i2c/i2c.h>
 
 extern struct stm32f4_gpio_softc gpio_sc;
-
 extern struct mdx_device dev_i2c1;
 
 static void
