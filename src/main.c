@@ -51,15 +51,12 @@ mcp3421_get_mv(uint8_t addr)
 	int mv;
 	int ret;
 
-	bzero(&data, 3);
-
 	msgs[0].slave = addr;
 	msgs[0].buf = data;
 	msgs[0].len = 3;
 	msgs[0].flags = IIC_M_RD;
 
 	ret = stm32f4_i2c_xfer(&dev_i2c1, msgs, 1);
-
 	if (ret == 0) {
 		b2 = data[0];
 		b1 = data[1];
