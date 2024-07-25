@@ -28,11 +28,9 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/thread.h>
-#include <sys/smp.h>
 
 #include <machine/cpufunc.h>
 #include <machine/cpuregs.h>
-#include <machine/scs.h>
 
 #include <dev/intc/intc.h>
 #include <dev/uart/uart.h>
@@ -65,15 +63,6 @@ udelay(uint32_t usec)
 		;
 }
 
-#if 0
-void
-usleep(uint32_t usec)
-{
-
-	mdx_usleep(usec);
-}
-#endif
-
 static void
 uart_putchar(int c, void *arg)
 {
@@ -97,8 +86,6 @@ static const struct stm32_gpio_pin uart_pins[] = {
 	{ PORT_A, 10, MODE_ALT, 6, OT_OD, OS_H, FLOAT }, /* I2C1_SDA */
 	PINS_END
 };
-
-//CTASSERT(sizeof(uart_pins[0]) sizeof(struct stm32_gpio_pin));
 
 void
 board_init(void)
