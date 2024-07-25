@@ -1,3 +1,29 @@
+/*-
+ * Copyright (c) 2024 Ruslan Bukin <br@bsdpad.com>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
 #include <sys/cdefs.h>
 #include <sys/systm.h>
 #include <sys/thread.h>
@@ -6,14 +32,10 @@
 #include <arm/stm/stm32g0.h>
 
 #include <dev/i2c/i2c.h>
-//#include <dev/i2c/bitbang/i2c_bitbang.h>
 
 extern struct stm32f4_gpio_softc gpio_sc;
 
 extern struct mdx_device dev_i2c1;
-
-//static struct i2c_bitbang_softc i2c_bitbang_sc;
-//static struct mdx_device dev_bitbang = { .sc = &i2c_bitbang_sc };
 
 static void
 gpio_set(int port, int pin, int val)
@@ -39,7 +61,6 @@ mcp3421_get_mv(uint8_t unit)
 	msgs[0].len = 3;
 	msgs[0].flags = IIC_M_RD;
 
-	//ret = mdx_i2c_transfer(&dev_bitbang, msgs, 1);
 	ret = stm32f4_i2c_xfer(&dev_i2c1, msgs, 1);
 
 	if (ret == 0) {
@@ -68,7 +89,6 @@ mcp3421_configure(uint8_t slave)
 	msgs[0].buf = &cfg;
 	msgs[0].len = 1;
 	msgs[0].flags = IIC_M_NOSTOP;
-	//ret = mdx_i2c_transfer(&dev_bitbang, msgs, 1);
 	ret = stm32f4_i2c_xfer(&dev_i2c1, msgs, 1);
 	if (ret != 0) {
 		printf("%s: could not configure mcp3421, slave %x\n",
@@ -80,73 +100,6 @@ mcp3421_configure(uint8_t slave)
 
 	return (0);
 }
-
-#if 0
-static const struct gpio_pin uart_pins[] = {
-	{ PORT_A,  9, MODE_OUT, 0, PULLDOWN }, /* SCL */
-	{ PORT_A, 10, MODE_INP, 0, PULLDOWN }, /* SDA */
-	{ -1, -1, -1, -1, -1 },
-};
-#endif
-
-#if 0
-static void
-i2c_sda(void *arg, bool enable)
-{
-
-	const struct gpio_pin pins_inp[] = {
-		{ PORT_A, 10, MODE_INP, 0, FLOAT }, /* SDA */
-		{ -1, -1, -1, -1, -1 },
-	};
-
-	const struct gpio_pin pins_out[] = {
-		{ PORT_A, 10, MODE_OUT, 0, FLOAT }, /* SDA */
-		{ -1, -1, -1, -1, -1 },
-	};
-
-	if (enable) {
-		pin_configure(&gpio_sc, pins_inp);
-	} else {
-		pin_configure(&gpio_sc, pins_out);
-	}
-}
-
-static void
-i2c_scl(void *arg, bool enable)
-{
-
-	const struct gpio_pin pins_inp[] = {
-		{ PORT_A, 9, MODE_INP, 0, FLOAT }, /* SCL */
-		{ -1, -1, -1, -1, -1 },
-	};
-
-	const struct gpio_pin pins_out[] = {
-		{ PORT_A, 9, MODE_OUT, 0, FLOAT }, /* SCL */
-		{ -1, -1, -1, -1, -1 },
-	};
-
-	if (enable)
-		pin_configure(&gpio_sc, pins_inp);
-        else
-		pin_configure(&gpio_sc, pins_out);
-}
-
-static int
-i2c_sda_val(void *arg)
-{
-
-	if (pin_get(&gpio_sc, PORT_A, 10))
-		return (1);
-
-	return (0);
-}
-
-static struct i2c_bitbang_ops i2c_ops = {
-	.i2c_scl = &i2c_scl,
-	.i2c_sda = &i2c_sda,
-	.i2c_sda_val = &i2c_sda_val,
-};
-#endif
 
 int
 main(void)
