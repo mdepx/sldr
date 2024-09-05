@@ -26,4 +26,6 @@ Use [STLINK-V3MINIE](https://www.st.com/en/development-tools/stlink-v3minie.html
 
 ![c115](https://raw.githubusercontent.com/mdepx/sldr/main/images/iron_c115.jpg)
 
+![boards](https://raw.githubusercontent.com/mdepx/sldr/main/images/boards.jpg)
+
 ![alt text](https://raw.githubusercontent.com/mdepx/sldr/main/images/sldr.jpg)
