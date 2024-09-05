@@ -24,6 +24,6 @@ Disclaimer: This is DIY contoller board. Use it on your own risk. I'm not respon
 
 Use [STLINK-V3MINIE](https://www.st.com/en/development-tools/stlink-v3minie.html) to program this board.
 
-![alt text](https://raw.githubusercontent.com/mdepx/sldr/main/images/sldr.jpg)
-
 ![c115](https://raw.githubusercontent.com/mdepx/sldr/main/images/iron_c115.jpg)
+
+![alt text](https://raw.githubusercontent.com/mdepx/sldr/main/images/sldr.jpg)
